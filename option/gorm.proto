@@ -1,0 +1,155 @@
+syntax = "proto3";
+package gorm;
+
+option go_package = "github.com/IguoChan/protoc-gen-gorm/option";
+
+import "google/protobuf/descriptor.proto";
+
+extend google.protobuf.MessageOptions {
+  optional bool set_table = 50000;
+  optional string table_name = 50001;
+  optional bool disable_snake_case = 50002;
+}
+
+extend google.protobuf.FieldOptions {
+  optional bool ignore_gorm_column = 50000;
+  optional Rules rules = 50001;
+}
+
+message Rules {
+  optional string column_name = 1;
+  oneof type {
+    BoolRules bool = 2;
+    IntRules int  = 3;
+    FloatRules float  = 4;
+    TimeRules time = 5;
+    BinaryRules binary = 6;
+    StringRules string = 7;
+    EnumRules enum = 8;
+  }
+  oneof idx {
+    bool primary_key = 9;
+    IndexRules uniqueIndex = 10;
+    IndexRules index = 11;
+  }
+  optional bool not_null = 12;
+}
+
+message BoolRules {
+  optional bool default = 1;
+}
+
+enum IntType {
+  tinyint = 0;
+  smallint = 1;
+  mediumint = 2;
+  int = 3;
+  bigint = 4;
+}
+
+enum FloatType {
+  float = 0;
+  double = 1;
+  decimal = 2;
+}
+
+enum TimeType {
+  datetime = 0;
+  date = 1;
+  timestamp = 2;
+}
+
+enum BinaryType {
+  binary = 0;
+  varbinary = 1;
+  tinyblob = 2;
+  blob = 3;
+  mediumblob = 4;
+  longblob = 5;
+}
+
+enum StringType {
+  char = 0;
+  varchar = 1;
+  tinytext = 2;
+  text = 3;
+  mediumtext = 4;
+  longtext = 5;
+}
+
+enum EnumType {
+  enum = 0; // 如果后续新增枚举值，可能需要改表，这往往得不偿失，慎用
+  int32 = 1;
+  string = 2;
+}
+
+message IntRules {
+  optional IntType type = 1; // int, bigint, mediumint, smallint, tinyint
+  optional int32 default = 2;
+  optional uint32 width = 3; // int(11), 11 is width
+  optional uint32 size = 4;
+}
+
+message FloatRules {
+  optional FloatType type = 1; // float, double, decimal
+  optional double default = 2;
+  optional PrecisionRule precision = 3; // float(10, 2), 10 is m，2 is d
+  optional bool unsigned = 4;
+}
+
+message PrecisionRule {
+  optional uint32 m = 1; // 可以使用的数字位数
+  optional uint32 d = 2; // 小数位数
+}
+
+enum TimeUnit {
+  s = 0;
+  ms = 1;
+  us = 2;
+  ns = 3;
+}
+
+message TimeRules {
+  optional TimeType type = 1; // datetime, date, timestamp
+  optional bool auto_create_time = 2;
+  optional bool auto_update_time = 3;
+  optional bool deleted_at = 4;
+  optional TimeUnit time_unit = 5;
+}
+
+message BinaryRules {
+  optional BinaryType type = 1; // binary, varbinary, tinyblob, blob, mediumblob, longblob
+  optional uint32 binary_width = 2;
+  optional uint32 size = 3;
+  optional bytes default = 4;
+}
+
+message StringRules {
+  optional StringType type = 1; // char, varchar, tinytext, text, mediumtext, longtext
+  optional uint32 char_width = 2;
+  optional uint32 size = 3;
+  optional string default = 4;
+}
+
+message EnumStrings {
+  repeated string values = 1;
+}
+
+message EnumInt32s {
+  repeated int32 values = 1;
+}
+
+message EnumRules {
+  optional EnumType type = 1; // enum, int32, string
+  repeated string enum_values = 2;
+  oneof default {
+    string string_default = 3;
+    int32 int_default = 4;
+  }
+}
+
+message IndexRules {
+  optional string name = 1;
+  optional bool unique = 2;
+  uint32 priority = 3;
+}
