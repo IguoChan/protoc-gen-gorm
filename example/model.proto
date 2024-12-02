@@ -1,0 +1,66 @@
+syntax = "proto3";
+
+package model;
+
+option go_package = "github.com/IguoChan/protoc-gen-gorm/examples/model";
+
+import "option/gorm.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/any.proto";
+
+message User {
+
+  message Author {
+    string name = 1;
+    string email = 2;
+  }
+
+  option (gorm.set_table) = true;
+//  option (gorm.table_name) = "user_table";
+
+  int32 id = 1 [(gorm.rules) = {int: {type: bigint}, primary_key: true}];
+  string name = 2 [(gorm.rules) =  {index: {name: "idx_name_addr", unique: true}}];
+  string email = 3;
+  string address = 4 [(gorm.rules) =  {index: {name: "idx_name_addr", unique: true}}];
+  string phone = 5;
+  float score = 6 [(gorm.rules) = {float: {type: decimal, precision: {m:10,d:2}, unsigned: true}, not_null: true}];
+  double balance = 7;
+  google.protobuf.Timestamp create_time = 8 [(gorm.rules) = {time: {type: datetime, auto_create_time: true}, not_null: true}];
+  google.protobuf.Timestamp update_time = 9 [(gorm.rules) = {time: {type: datetime, auto_update_time: true}, not_null: true}];
+  google.protobuf.Timestamp deleted_time = 11 [(gorm.rules) = {time: {type: datetime, deleted_at: true}, not_null: true}];
+  google.protobuf.Timestamp date = 10 [(gorm.rules) = {time: {type: date}}];
+  bytes extra = 12 [(gorm.rules).binary = {type: tinyblob, default: 'abc'}];
+  Author author = 13 [(gorm.ignore_gorm_column) = true];
+  Status status = 14 [(gorm.rules) = {enum: {type: enum, enum_values: ["PENDING", "UNKNOWN"], string_default: "UNKNOWN"}}];
+  Status status1 = 15 [(gorm.rules) = {enum: {type: string, enum_values: ["PENDING", "UNKNOWN"], string_default: "UNKNOWN"}}];
+  Status status2 = 16 [(gorm.rules) = {enum: {type: int32, int_default: 0}}];
+  int64 t1 = 18 [(gorm.rules) = {time: {type: datetime, auto_create_time: true}, not_null: true}];
+  uint64 t2 = 19 [(gorm.rules) = {time: {type: datetime, auto_update_time: true}, not_null: true}];
+  string t3 = 20 [(gorm.rules) = {time: {type: datetime}, not_null: true}];
+  int64 d1 = 21 [(gorm.rules) = {time: {type: date}}];
+  repeated int32 ids = 22;
+  map<string, string> m1 = 23;
+}
+
+enum Status {
+  UNKNOWN = 0;
+  PENDING = 1;
+}
+
+message Author {
+  string name = 1;
+  string email = 2;
+}
+
+message Student {
+  option (gorm.set_table) = true;
+  int32 id = 1 [(gorm.rules) = {int: {type: bigint}, primary_key: true}];
+  string name = 2;
+  string address = 3;
+  string phone = 4;
+  float score = 5;
+  google.protobuf.Timestamp create_time = 6 [(gorm.rules) = {time: {type: datetime, auto_create_time: true}, not_null: true}];
+  google.protobuf.Timestamp update_time = 7 [(gorm.rules) = {time: {type: datetime, auto_update_time: true}, not_null: true}];
+  google.protobuf.Timestamp deleted_time = 8 [(gorm.rules) = {time: {type: datetime, deleted_at: true}, not_null: true}];
+}
+
