@@ -1,0 +1,18 @@
+syntax = "proto3";
+package gorm;
+
+option go_package = "github.com/IguoChan/protoc-gen-gorm/proto/option";
+
+import "google/protobuf/descriptor.proto";
+import "google/protobuf/duration.proto";
+import "google/protobuf/timestamp.proto";
+
+extend google.protobuf.MessageOptions {
+  optional bool gorm_model = 50000;
+  optional string table_name = 50001;
+}
+
+extend google.protobuf.FieldOptions {
+  optional bool ignore_gorm_column = 50000;
+  optional bool primary_key = 50001;
+}
