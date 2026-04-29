@@ -46,7 +46,17 @@ func (gg *GormOptionGenerator) GenerateFile() *protogen.GeneratedFile {
 }
 
 func (gg *GormOptionGenerator) generateOption() {
-	gg.g.P("type Option func(*", gormPackage.Ident("DB"), ")  *", gormPackage.Ident("DB"))
+	gg.g.P("type Option struct {")
+	gg.g.P("apply func(*", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"))
+	gg.g.P("isDB bool")
+	gg.g.P("}")
+	gg.g.P()
+	gg.g.P("func (opt Option) Apply(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("if opt.apply == nil {")
+	gg.g.P("return db")
+	gg.g.P("}")
+	gg.g.P("return opt.apply(db)")
+	gg.g.P("}")
 	gg.g.P()
 
 	gg.autoMigrate()
@@ -56,11 +66,28 @@ func (gg *GormOptionGenerator) generateOption() {
 
 func (gg *GormOptionGenerator) generateNormalOption() {
 	gg.dbOption()
+	gg.clausesOption()
+	gg.distinctOption()
 	gg.selectOption()
+	gg.omitOption()
+	gg.mapColumnsOption()
 	gg.tableNameOption()
+	gg.whereOption()
+	gg.notOption()
+	gg.orOption()
+	gg.joinsOption()
+	gg.innerJoinsOption()
+	gg.groupOption()
+	gg.havingOption()
 	gg.limitOption()
 	gg.offsetOption()
 	gg.orderOption()
+	gg.scopesOption()
+	gg.preloadOption()
+	gg.attrsOption()
+	gg.assignOption()
+	gg.unscopedOption()
+	gg.rawOption()
 }
 
 func (gg *GormOptionGenerator) autoMigrate() {
@@ -78,17 +105,66 @@ func (gg *GormOptionGenerator) dbOption() {
 	gg.g.P("if db == nil {")
 	gg.g.P("panic(\"db is nil\")")
 	gg.g.P("}")
-	gg.g.P("return func(*", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return Option{")
+	gg.g.P("isDB: true,")
+	gg.g.P("apply: func(*", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
 	gg.g.P("return db")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) clausesOption() {
+	gg.g.P("func Clauses(conds ...", clausePackage.Ident("Expression"), ") Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Clauses(conds...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) distinctOption() {
+	gg.g.P("func Distinct(args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Distinct(args...)")
+	gg.g.P("},")
 	gg.g.P("}")
 	gg.g.P("}")
 	gg.g.P()
 }
 
 func (gg *GormOptionGenerator) selectOption() {
-	gg.g.P("func Select(fields ...string) ", "Option {")
-	gg.g.P("return func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
-	gg.g.P("return db.Select(fields)")
+	gg.g.P("func Select(query interface{}, args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Select(query, args...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) omitOption() {
+	gg.g.P("func Omit(columns ...string) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Omit(columns...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) mapColumnsOption() {
+	gg.g.P("func MapColumns(m map[string]string) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.MapColumns(m)")
+	gg.g.P("},")
 	gg.g.P("}")
 	gg.g.P("}")
 	gg.g.P()
@@ -96,8 +172,87 @@ func (gg *GormOptionGenerator) selectOption() {
 
 func (gg *GormOptionGenerator) tableNameOption() {
 	gg.g.P("func TableName(name string) ", "Option {")
-	gg.g.P("return func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
 	gg.g.P("return db.Table(name)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) whereOption() {
+	gg.g.P("func Where(query interface{}, args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Where(query, args...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) notOption() {
+	gg.g.P("func Not(query interface{}, args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Not(query, args...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) orOption() {
+	gg.g.P("func Or(query interface{}, args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Or(query, args...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) joinsOption() {
+	gg.g.P("func Joins(query string, args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Joins(query, args...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) innerJoinsOption() {
+	gg.g.P("func InnerJoins(query string, args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.InnerJoins(query, args...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) groupOption() {
+	gg.g.P("func Group(name string) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Group(name)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) havingOption() {
+	gg.g.P("func Having(query interface{}, args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Having(query, args...)")
+	gg.g.P("},")
 	gg.g.P("}")
 	gg.g.P("}")
 	gg.g.P()
@@ -105,8 +260,10 @@ func (gg *GormOptionGenerator) tableNameOption() {
 
 func (gg *GormOptionGenerator) limitOption() {
 	gg.g.P("func Limit(limit int) ", "Option {")
-	gg.g.P("return func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
 	gg.g.P("return db.Limit(limit)")
+	gg.g.P("},")
 	gg.g.P("}")
 	gg.g.P("}")
 	gg.g.P()
@@ -114,8 +271,10 @@ func (gg *GormOptionGenerator) limitOption() {
 
 func (gg *GormOptionGenerator) offsetOption() {
 	gg.g.P("func Offset(offset int) ", "Option {")
-	gg.g.P("return func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
 	gg.g.P("return db.Offset(offset)")
+	gg.g.P("},")
 	gg.g.P("}")
 	gg.g.P("}")
 	gg.g.P()
@@ -123,8 +282,76 @@ func (gg *GormOptionGenerator) offsetOption() {
 
 func (gg *GormOptionGenerator) orderOption() {
 	gg.g.P("func Order(value interface{}) ", "Option {")
-	gg.g.P("return func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
 	gg.g.P("return db.Order(value)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) scopesOption() {
+	gg.g.P("func Scopes(funcs ...func(*", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), ") Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Scopes(funcs...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) preloadOption() {
+	gg.g.P("func Preload(query string, args ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Preload(query, args...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) attrsOption() {
+	gg.g.P("func Attrs(attrs ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Attrs(attrs...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) assignOption() {
+	gg.g.P("func Assign(attrs ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Assign(attrs...)")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) unscopedOption() {
+	gg.g.P("func Unscoped() Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Unscoped()")
+	gg.g.P("},")
+	gg.g.P("}")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) rawOption() {
+	gg.g.P("func Raw(sql string, values ...interface{}) Option {")
+	gg.g.P("return Option{")
+	gg.g.P("apply: func(db *", gormPackage.Ident("DB"), ") *", gormPackage.Ident("DB"), " {")
+	gg.g.P("return db.Raw(sql, values...)")
+	gg.g.P("},")
 	gg.g.P("}")
 	gg.g.P("}")
 	gg.g.P()
@@ -132,32 +359,59 @@ func (gg *GormOptionGenerator) orderOption() {
 
 func (gg *GormOptionGenerator) genFinisherFunction() {
 	gg.genCreateFunction()
+	gg.genCreateInBatchesFunction()
 	gg.genSaveFunction()
 	gg.genFirstFunction()
 	gg.genFirstForUpdateFunction()
+	gg.genTakeFunction()
+	gg.genTakeForUpdateFunction()
+	gg.genLastFunction()
+	gg.genLastForUpdateFunction()
 	gg.genFindFunction()
 	gg.genFindForUpdateFunction()
+	gg.genFindInBatchesFunction()
+	gg.genFirstOrInitFunction()
+	gg.genFirstOrCreateFunction()
+	gg.genUpdateFunction()
+	gg.genUpdatesFunction()
+	gg.genUpdateColumnFunction()
+	gg.genUpdateColumnsFunction()
 	gg.genPartialUpdateFunction()
 	gg.genCountFunction()
+	gg.genPluckFunction()
+	gg.genScanFunction()
 	gg.genDeleteFunction()
+	gg.genDeleteModelFunction()
 	gg.genUnscopedDeleteFunction()
+	gg.genUnscopedDeleteModelFunction()
+	gg.genRowFunction()
+	gg.genRowsFunction()
+	gg.genExecFunction()
+	gg.genTransactionFunction()
 
+	gg.genApplyOptionsFunction()
 	gg.genIsDbClosure()
 }
 
 func (gg *GormOptionGenerator) genCreateFunction() {
 	gg.g.P("func Create(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).Create(model).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genCreateInBatchesFunction() {
+	gg.g.P("func CreateInBatches(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", models interface{}, batchSize int, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).CreateInBatches(models, batchSize).Error")
 	gg.g.P("}")
 	gg.g.P()
 }
 
 func (gg *GormOptionGenerator) genSaveFunction() {
 	gg.g.P("func Save(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).Save(model).Error")
 	gg.g.P("}")
 	gg.g.P()
@@ -165,8 +419,7 @@ func (gg *GormOptionGenerator) genSaveFunction() {
 
 func (gg *GormOptionGenerator) genFirstFunction() {
 	gg.g.P("func First(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).First(model).Error")
 	gg.g.P("}")
 	gg.g.P()
@@ -174,17 +427,47 @@ func (gg *GormOptionGenerator) genFirstFunction() {
 
 func (gg *GormOptionGenerator) genFirstForUpdateFunction() {
 	gg.g.P("func FirstForUpdate(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).Clauses(", clausePackage.Ident("Locking"), "{Strength: \"UPDATE\"}).First(model, \"\").Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genTakeFunction() {
+	gg.g.P("func Take(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Take(model).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genTakeForUpdateFunction() {
+	gg.g.P("func TakeForUpdate(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Clauses(", clausePackage.Ident("Locking"), "{Strength: \"UPDATE\"}).Take(model, \"\").Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genLastFunction() {
+	gg.g.P("func Last(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Last(model).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genLastForUpdateFunction() {
+	gg.g.P("func LastForUpdate(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Clauses(", clausePackage.Ident("Locking"), "{Strength: \"UPDATE\"}).Last(model, \"\").Error")
 	gg.g.P("}")
 	gg.g.P()
 }
 
 func (gg *GormOptionGenerator) genFindFunction() {
 	gg.g.P("func Find(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).Find(model).Error")
 	gg.g.P("}")
 	gg.g.P()
@@ -192,17 +475,71 @@ func (gg *GormOptionGenerator) genFindFunction() {
 
 func (gg *GormOptionGenerator) genFindForUpdateFunction() {
 	gg.g.P("func FindForUpdate(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).Clauses(", clausePackage.Ident("Locking"), "{Strength: \"UPDATE\"}).Find(model, \"\").Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genFindInBatchesFunction() {
+	gg.g.P("func FindInBatches(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, batchSize int, fc func(tx *", gormPackage.Ident("DB"), ", batch int) error, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).FindInBatches(model, batchSize, fc).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genFirstOrInitFunction() {
+	gg.g.P("func FirstOrInit(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).FirstOrInit(model).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genFirstOrCreateFunction() {
+	gg.g.P("func FirstOrCreate(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).FirstOrCreate(model).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genUpdateFunction() {
+	gg.g.P("func Update(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, column string, value interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Model(model).Update(column, value).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genUpdatesFunction() {
+	gg.g.P("func Updates(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, values interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Model(model).Updates(values).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genUpdateColumnFunction() {
+	gg.g.P("func UpdateColumn(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, column string, value interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Model(model).UpdateColumn(column, value).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genUpdateColumnsFunction() {
+	gg.g.P("func UpdateColumns(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, values interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Model(model).UpdateColumns(values).Error")
 	gg.g.P("}")
 	gg.g.P()
 }
 
 func (gg *GormOptionGenerator) genPartialUpdateFunction() {
 	gg.g.P("func PartialUpdate(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, fields map[string]interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).Model(model).Updates(fields).Error")
 	gg.g.P("}")
 	gg.g.P()
@@ -210,33 +547,91 @@ func (gg *GormOptionGenerator) genPartialUpdateFunction() {
 
 func (gg *GormOptionGenerator) genCountFunction() {
 	gg.g.P("func Count(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) (int64, error) {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("var count int64")
 	gg.g.P("return count, db.WithContext(ctx).Model(model).Count(&count).Error")
 	gg.g.P("}")
 	gg.g.P()
 }
 
+func (gg *GormOptionGenerator) genPluckFunction() {
+	gg.g.P("func Pluck(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, column string, dest interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Model(model).Pluck(column, dest).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genScanFunction() {
+	gg.g.P("func ScanQuery(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", dest interface{}, opts ...Option) error {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Scan(dest).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
 func (gg *GormOptionGenerator) genDeleteFunction() {
 	gg.g.P("func Delete(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).Delete(model).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genDeleteModelFunction() {
+	gg.g.P("func DeleteModel(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
+	gg.g.P("return Delete(ctx, db, model, opts...)")
 	gg.g.P("}")
 	gg.g.P()
 }
 
 func (gg *GormOptionGenerator) genUnscopedDeleteFunction() {
 	gg.g.P("func UnscopedDelete(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
-	gg.genSwapDBFirst()
-	gg.genApplyOpts()
+	gg.g.P("db = applyOptions(db, opts...)")
 	gg.g.P("return db.WithContext(ctx).Unscoped().Delete(model).Error")
 	gg.g.P("}")
 	gg.g.P()
 }
 
-func (gg *GormOptionGenerator) genSwapDBFirst() {
+func (gg *GormOptionGenerator) genUnscopedDeleteModelFunction() {
+	gg.g.P("func UnscopedDeleteModel(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", model interface{}, opts ...Option) error {")
+	gg.g.P("return UnscopedDelete(ctx, db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genRowFunction() {
+	gg.g.P("func Row(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", opts ...Option) *", sqlPackage.Ident("Row"), " {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Row()")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genRowsFunction() {
+	gg.g.P("func Rows(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", opts ...Option) (*", sqlPackage.Ident("Rows"), ", error) {")
+	gg.g.P("db = applyOptions(db, opts...)")
+	gg.g.P("return db.WithContext(ctx).Rows()")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genExecFunction() {
+	gg.g.P("func Exec(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", sql string, values ...interface{}) error {")
+	gg.g.P("return db.WithContext(ctx).Exec(sql, values...).Error")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genTransactionFunction() {
+	gg.g.P("func Transaction(ctx ", contextPackage.Ident("Context"), ", db *", gormPackage.Ident("DB"), ", fc func(tx *", gormPackage.Ident("DB"), ") error) error {")
+	gg.g.P("return db.WithContext(ctx).Transaction(fc)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormOptionGenerator) genApplyOptionsFunction() {
+	gg.g.P("func applyOptions(db *", gormPackage.Ident("DB"), ", opts ...Option) *", gormPackage.Ident("DB"), " {")
 	gg.g.P("for i, opt := range opts {")
 	gg.g.P("if IsDBClosure(opt) {")
 	gg.g.P("opts[i], opts[0] = opts[0], opts[i]")
@@ -244,33 +639,17 @@ func (gg *GormOptionGenerator) genSwapDBFirst() {
 	gg.g.P("}")
 	gg.g.P("}")
 	gg.g.P()
-}
-
-func (gg *GormOptionGenerator) genApplyOpts() {
 	gg.g.P("for _, opt := range opts {")
-	gg.g.P("db = opt(db)")
+	gg.g.P("db = opt.Apply(db)")
+	gg.g.P("}")
+	gg.g.P("return db")
 	gg.g.P("}")
 	gg.g.P()
 }
 
 func (gg *GormOptionGenerator) genIsDbClosure() {
 	gg.g.P("func IsDBClosure(opt Option) bool {")
-	gg.g.P("fn := ", runtimePackage.Ident("FuncForPC"), "(", reflectPackage.Ident("ValueOf"), "(opt).Pointer()).Name()")
-	gg.g.P("seps := []rune{'/', '.'}")
-	gg.g.P("fields := ", stringsPackage.Ident("FieldsFunc"), "(fn, func(sep rune) bool {")
-	gg.g.P("for _, s := range seps {")
-	gg.g.P("if sep == s {")
-	gg.g.P("return true")
-	gg.g.P("}")
-	gg.g.P("}")
-	gg.g.P("return false")
-	gg.g.P("})")
-
-	gg.g.P("if size := len(fields); size > 2 {")
-	gg.g.P("// return fields[size-1] == \"func1\" && fields[size-2] == \"DB\" && fields[size-3] == \"", gg.file.GoPackageName, "\"")
-	gg.g.P("return fields[size-1] == \"func1\" && fields[size-2] == \"DB\" // imprecise judgment")
-	gg.g.P("}")
-	gg.g.P("return false")
+	gg.g.P("return opt.isDB")
 	gg.g.P("}")
 	gg.g.P()
 }

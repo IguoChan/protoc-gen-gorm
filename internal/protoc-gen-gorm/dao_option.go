@@ -55,15 +55,35 @@ func (gg *GormDaoGenerator) GenerateFile() *protogen.GeneratedFile {
 func (gg *GormDaoGenerator) genMessageDao(message *protogen.Message) {
 	gg.genMessageDaoType(message)
 	gg.genCreate(message)
+	gg.genCreateInBatches(message)
 	gg.genSave(message)
 	gg.genFirst(message)
 	gg.genFirstForUpdate(message)
+	gg.genTake(message)
+	gg.genTakeForUpdate(message)
+	gg.genLast(message)
+	gg.genLastForUpdate(message)
 	gg.genFind(message)
 	gg.genFindForUpdate(message)
+	gg.genFindInBatches(message)
+	gg.genFirstOrInit(message)
+	gg.genFirstOrCreate(message)
+	gg.genUpdate(message)
+	gg.genUpdates(message)
+	gg.genUpdateColumn(message)
+	gg.genUpdateColumns(message)
 	gg.genPartialUpdate(message)
 	gg.genCount(message)
+	gg.genPluck(message)
+	gg.genScan(message)
 	gg.genDelete(message)
+	gg.genDeleteModel(message)
 	gg.genUnscopedDelete(message)
+	gg.genUnscopedDeleteModel(message)
+	gg.genRow(message)
+	gg.genRows(message)
+	gg.genExec(message)
+	gg.genTransaction(message)
 }
 
 func (gg *GormDaoGenerator) genMessageDaoType(message *protogen.Message) {
@@ -82,6 +102,13 @@ func (gg *GormDaoGenerator) genMessageDaoType(message *protogen.Message) {
 func (gg *GormDaoGenerator) genCreate(message *protogen.Message) {
 	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Create(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
 	gg.g.P("    return model, Create(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genCreateInBatches(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) CreateInBatches(ctx ", contextPackage.Ident("Context"), ", models []*", message.GoIdent.GoName, structSuffix, ", batchSize int, opts ...Option) ([]*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    return models, CreateInBatches(ctx, dao.db, models, batchSize, opts...)")
 	gg.g.P("}")
 	gg.g.P()
 }
@@ -109,6 +136,38 @@ func (gg *GormDaoGenerator) genFirstForUpdate(message *protogen.Message) {
 	gg.g.P()
 }
 
+func (gg *GormDaoGenerator) genTake(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Take(ctx ", contextPackage.Ident("Context"), ", opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    model := &", message.GoIdent.GoName, structSuffix, "{}")
+	gg.g.P("    return model, Take(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genTakeForUpdate(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) TakeForUpdate(ctx ", contextPackage.Ident("Context"), ", opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    model := &", message.GoIdent.GoName, structSuffix, "{}")
+	gg.g.P("    return model, TakeForUpdate(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genLast(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Last(ctx ", contextPackage.Ident("Context"), ", opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    model := &", message.GoIdent.GoName, structSuffix, "{}")
+	gg.g.P("    return model, Last(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genLastForUpdate(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) LastForUpdate(ctx ", contextPackage.Ident("Context"), ", opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    model := &", message.GoIdent.GoName, structSuffix, "{}")
+	gg.g.P("    return model, LastForUpdate(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
 func (gg *GormDaoGenerator) genFind(message *protogen.Message) {
 	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Find(ctx ", contextPackage.Ident("Context"), ", opts ...Option) ([]*", message.GoIdent.GoName, structSuffix, ", error) {")
 	gg.g.P("    var models []*", message.GoIdent.GoName, structSuffix)
@@ -121,6 +180,56 @@ func (gg *GormDaoGenerator) genFindForUpdate(message *protogen.Message) {
 	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) FindForUpdate(ctx ", contextPackage.Ident("Context"), ", opts ...Option) ([]*", message.GoIdent.GoName, structSuffix, ", error) {")
 	gg.g.P("    var models []*", message.GoIdent.GoName, structSuffix)
 	gg.g.P("    return models, FindForUpdate(ctx, dao.db, &models, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genFindInBatches(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) FindInBatches(ctx ", contextPackage.Ident("Context"), ", batchSize int, fc func(tx *", gormPackage.Ident("DB"), ", batch int) error, opts ...Option) error {")
+	gg.g.P("    var models []*", message.GoIdent.GoName, structSuffix)
+	gg.g.P("    return FindInBatches(ctx, dao.db, &models, batchSize, fc, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genFirstOrInit(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) FirstOrInit(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    return model, FirstOrInit(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genFirstOrCreate(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) FirstOrCreate(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    return model, FirstOrCreate(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genUpdate(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Update(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", column string, value interface{}, opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    return model, Update(ctx, dao.db, model, column, value, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genUpdates(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Updates(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", values interface{}, opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    return model, Updates(ctx, dao.db, model, values, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genUpdateColumn(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) UpdateColumn(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", column string, value interface{}, opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    return model, UpdateColumn(ctx, dao.db, model, column, value, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genUpdateColumns(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) UpdateColumns(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", values interface{}, opts ...Option) (*", message.GoIdent.GoName, structSuffix, ", error) {")
+	gg.g.P("    return model, UpdateColumns(ctx, dao.db, model, values, opts...)")
 	gg.g.P("}")
 	gg.g.P()
 }
@@ -139,6 +248,20 @@ func (gg *GormDaoGenerator) genCount(message *protogen.Message) {
 	gg.g.P()
 }
 
+func (gg *GormDaoGenerator) genPluck(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Pluck(ctx ", contextPackage.Ident("Context"), ", column string, dest interface{}, opts ...Option) error {")
+	gg.g.P("    return Pluck(ctx, dao.db, &", message.GoIdent.GoName, structSuffix, "{}, column, dest, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genScan(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Scan(ctx ", contextPackage.Ident("Context"), ", dest interface{}, opts ...Option) error {")
+	gg.g.P("    return ScanQuery(ctx, dao.db, dest, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
 func (gg *GormDaoGenerator) genDelete(message *protogen.Message) {
 	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Delete(ctx ", contextPackage.Ident("Context"), ", opts ...Option) error {")
 	gg.g.P("    return Delete(ctx, dao.db, &", message.GoIdent.GoName, structSuffix, "{}, opts...)")
@@ -146,9 +269,53 @@ func (gg *GormDaoGenerator) genDelete(message *protogen.Message) {
 	gg.g.P()
 }
 
+func (gg *GormDaoGenerator) genDeleteModel(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) DeleteModel(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", opts ...Option) error {")
+	gg.g.P("    return DeleteModel(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
 func (gg *GormDaoGenerator) genUnscopedDelete(message *protogen.Message) {
 	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) DeleteUnscoped(ctx ", contextPackage.Ident("Context"), ", opts ...Option) error {")
 	gg.g.P("    return UnscopedDelete(ctx, dao.db, &", message.GoIdent.GoName, structSuffix, "{}, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genUnscopedDeleteModel(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) DeleteModelUnscoped(ctx ", contextPackage.Ident("Context"), ", model *", message.GoIdent.GoName, structSuffix, ", opts ...Option) error {")
+	gg.g.P("    return UnscopedDeleteModel(ctx, dao.db, model, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genRow(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Row(ctx ", contextPackage.Ident("Context"), ", opts ...Option) *", sqlPackage.Ident("Row"), " {")
+	gg.g.P("    return Row(ctx, dao.db, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genRows(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Rows(ctx ", contextPackage.Ident("Context"), ", opts ...Option) (*", sqlPackage.Ident("Rows"), ", error) {")
+	gg.g.P("    return Rows(ctx, dao.db, opts...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genExec(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Exec(ctx ", contextPackage.Ident("Context"), ", sql string, values ...interface{}) error {")
+	gg.g.P("    return Exec(ctx, dao.db, sql, values...)")
+	gg.g.P("}")
+	gg.g.P()
+}
+
+func (gg *GormDaoGenerator) genTransaction(message *protogen.Message) {
+	gg.g.P("func (dao *", message.GoIdent.GoName, "Dao) Transaction(ctx ", contextPackage.Ident("Context"), ", fc func(tx *", message.GoIdent.GoName, "Dao) error) error {")
+	gg.g.P("    return Transaction(ctx, dao.db, func(tx *", gormPackage.Ident("DB"), ") error {")
+	gg.g.P("        return fc(New", message.GoIdent.GoName, "Dao(tx))")
+	gg.g.P("    })")
 	gg.g.P("}")
 	gg.g.P()
 }
